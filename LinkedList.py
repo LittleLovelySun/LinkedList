@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 
 class Node:
@@ -61,6 +61,16 @@ class LinkedList:
 
         current.next = Node(value)
 
+    def _append_node(self, prev: Node, node: Node) -> Node:
+        node.next = None
+        if prev is None:
+            self._head = node
+        else:
+            prev.next = node
+
+        self._length += 1
+        return node
+
     def insert_at(self, value: int, index: int):
         if index < 0 or index > self.length:
             raise IndexError(f'cannot insert `{value}` at `{index}` index: out of range')
@@ -94,7 +104,7 @@ class LinkedList:
 
         self._length -= 1
 
-        prev = self._head
+        prev = None
         current = self._head
 
         while current.next is not None:
@@ -128,7 +138,7 @@ class LinkedList:
         return remove_value
 
     def remove_by_value(self, value: int):
-        prev = self._head
+        prev = None
         current = self._head
 
         while current:
@@ -151,13 +161,88 @@ class LinkedList:
         self._head = None
 
         while current:
-            tmp = current
+            c = current
             current = current.next
-            tmp.next = self._head
-            self._head = tmp
+            c.next = self._head
+            self._head = c
 
-    def intersection_sort(self):
-        pass
+    def _insert_in_sorting(self, node: Node):
+        prev = None
+        current = self._head
+        while current and current.value < node.value:
+            prev = current
+            current = current.next
+
+        if current == self._head:
+            self._head = node
+        else:
+            prev.next = node
+
+        node.next = current
+
+    def insertion_sort(self):
+        current = self._head
+        self._head = None
+
+        while current:
+            next_ = current.next
+            self._insert_in_sorting(current)
+            current = next_
+
+    def _merge(self, left: 'LinkedList', right: 'LinkedList'):
+        self._head = None
+        self._length = 0
+        prev = None
+
+        while left._head or right._head:
+            if not right._head or (left._head and left._head.value < right._head.value):
+                current = left._head
+                left._head = left._head.next
+            else:
+                current = right._head
+                right._head = right._head.next
+
+            prev = self._append_node(prev, current)
 
     def merge_sort(self):
-        pass
+        if self.is_empty or self._head.next is None:
+            return
+
+        left = LinkedList()
+        right = LinkedList()
+
+        prev_left = None
+        prev_right = None
+        current = self._head
+
+        for i in range(self._length):
+            next_ = current.next
+
+            if i < self._length // 2:
+                prev_left = left._append_node(prev_left, current)
+            else:
+                prev_right = right._append_node(prev_right, current)
+
+            current = next_
+
+        left.merge_sort()
+        right.merge_sort()
+        self._merge(left, right)
+
+    def to_list(self) -> List[int]:
+        ret = []
+        current = self._head
+
+        while current:
+            ret.append(current.value)
+            current = current.next
+
+        return ret
+
+    @classmethod
+    def from_list(cls, list_: List[int]) -> 'LinkedList':
+        ret = cls()
+        for elem in list_:
+            ret.add_back(elem)
+
+        return ret
